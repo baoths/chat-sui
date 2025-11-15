@@ -1,0 +1,59 @@
+@startuml Deployment Model
+
+skinparam node {
+    BackgroundColor<<dev>> LightBlue
+    BackgroundColor<<build>> LightGreen
+    BackgroundColor<<contract>> LightYellow
+    BackgroundColor<<frontend>> LightPink
+    BackgroundColor<<prod>> LightGray
+}
+
+node "Development" <<dev>> {
+    artifact "Source Code"
+    artifact "Sui CLI"
+    artifact "Dev Server"
+}
+
+node "CI/CD Pipeline" <<build>> {
+    artifact "Code Quality"
+    artifact "Type Check"
+    artifact "Build"
+    artifact "Tests"
+}
+
+node "Sui Network" <<contract>> {
+    component "Package Deploy"
+    database "Registries" {
+        artifact ProfileRegistry
+        artifact RoomRegistry
+        artifact MessageRegistry
+        artifact MemberRegistry
+    }
+}
+
+node "Hosting" <<frontend>> {
+    artifact "Production Bundle"
+    artifact "Static Assets"
+    artifact "CDN"
+}
+
+cloud "Production" <<prod>> {
+    actor Users
+    component "Web Browser"
+    component "IPFS Gateway"
+    database "Sui Mainnet RPC"
+}
+
+"Source Code" --> "CI/CD Pipeline" : git push
+"CI/CD Pipeline" --> "Package Deploy" : on success
+"Package Deploy" --> Registries : create
+Registries --> "Production Bundle" : configure IDs
+"Production Bundle" --> "Static Assets"
+"Static Assets" --> CDN
+CDN --> Users : access
+Users --> "Web Browser"
+Users --> "IPFS Gateway"
+"Web Browser" --> "Sui Mainnet RPC"
+"IPFS Gateway" --> "Sui Mainnet RPC"
+
+@enduml

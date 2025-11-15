@@ -1,0 +1,74 @@
+@startuml Messaging Flow
+
+actor User
+participant "UI" as UI
+participant "Content Validation" as Validation
+participant "Membership Check" as Membership
+participant "RoomMemberRegistry" as RMR
+participant "Transaction Builder" as TX
+participant "Wallet" as Wallet
+participant "Blockchain" as BC
+database "Message Object" as MsgObj
+database "MessageRegistry" as MsgReg
+participant "Event Capture" as Event
+participant "Query Invalidation" as Query
+participant "UI Update" as UIUpdate
+
+User -> UI: Type message
+UI -> Validation: Validate content
+activate Validation
+Validation -> Validation: Check length
+Validation -> Validation: Check not empty
+Validation --> UI: Valid
+deactivate Validation
+
+UI -> Membership: Check membership
+activate Membership
+Membership -> RMR: is_member_of_room()
+RMR --> Membership: true/false
+Membership --> UI: Confirmed
+deactivate Membership
+
+UI -> TX: Build send_message TX
+activate TX
+TX -> TX: Add profileRegistryId
+TX -> TX: Add roomRegistryId
+TX -> TX: Add roomId
+TX -> TX: Add messageRegistryId
+TX -> TX: Add memberRegistryId
+TX -> TX: Add content
+TX -> TX: Add clock object
+TX --> UI: Transaction ready
+deactivate TX
+
+UI -> Wallet: Request signature
+Wallet -> User: Confirm transaction
+User --> Wallet: Approve
+Wallet --> UI: Signed TX
+
+UI -> BC: Execute transaction
+activate BC
+create MsgObj
+BC -> MsgObj: Create Message Object
+BC -> MsgReg: Add to Registry
+activate MsgReg
+MsgReg -> MsgReg: Add message_id
+MsgReg -> MsgReg: Increment count
+deactivate MsgReg
+BC -> BC: Emit MessageSent event
+BC --> UI: Success
+deactivate BC
+
+BC -> Event: Event captured
+activate Event
+Event -> Query: Trigger invalidation
+activate Query
+Query -> BC: Refetch messages
+BC --> Query: Updated list
+Query -> UIUpdate: Update state
+deactivate Query
+deactivate Event
+
+UIUpdate -> User: Display new message
+
+@enduml

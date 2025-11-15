@@ -1,0 +1,90 @@
+@startuml Object Relationship Model
+
+skinparam class {
+    BackgroundColor<<Shared>> LightYellow
+    BackgroundColor<<Owned>> LightBlue
+    BorderColor Black
+    ArrowColor Black
+}
+
+class "ProfileRegistry" <<Shared>> {
+    + id: UID
+    + profiles: Table
+    + usernames: Table
+}
+
+class "UserProfile" <<Owned>> {
+    + id: UID
+    + owner: address
+    + username: String
+    + created_at: u64
+    + updated_at: u64
+}
+
+class "RoomRegistry" <<Shared>> {
+    + id: UID
+    + rooms: Table
+    + room_count: u64
+}
+
+class "Room" <<Shared>> {
+    + id: UID
+    + name: String
+    + description: String
+    + creator: address
+    + created_at: u64
+    + updated_at: u64
+    + member_count: u64
+}
+
+class "RoomMemberRegistry" <<Shared>> {
+    + id: UID
+    + members_by_room: Table
+    + member_counts: Table
+}
+
+class "MessageRegistry" <<Shared>> {
+    + id: UID
+    + messages_by_room: Table
+    + message_counts: Table
+}
+
+class "Message" <<Owned>> {
+    + id: UID
+    + room_id: ID
+    + author: address
+    + content: String
+    + created_at: u64
+}
+
+ProfileRegistry "1" --> "N" UserProfile : maps to
+RoomRegistry "1" --> "N" Room : tracks
+Room "N" --> "M" UserProfile : membership
+RoomMemberRegistry --> Room : tracks
+RoomMemberRegistry --> UserProfile : members
+Room "1" --> "N" Message : contains
+MessageRegistry --> Room : tracks
+MessageRegistry --> Message : indexes
+
+note right of ProfileRegistry
+  Shared Object
+  Concurrent access
+  Username validation
+end note
+
+note right of Room
+  Shared Object
+  Multi-user interaction
+end note
+
+note right of UserProfile
+  Owned Object
+  Transferable
+end note
+
+note right of Message
+  Owned Object
+  Author ownership
+end note
+
+@enduml

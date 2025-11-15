@@ -1,0 +1,110 @@
+@startuml Security Model
+
+skinparam package {
+    BackgroundColor<<L1>> LightBlue
+    BackgroundColor<<L2>> LightGreen
+    BackgroundColor<<L3>> LightYellow
+    BackgroundColor<<L4>> LightPink
+}
+
+package "Layer 1: Smart Contract Security" <<L1>> {
+    package "Access Control" {
+        component "Owner-only ops"
+        component "Member-only ops"
+        component "Registry checks"
+    }
+    
+    package "Input Validation" {
+        component "Length constraints"
+        component "String validation"
+        component "Type safety"
+        component "Overflow protection"
+    }
+    
+    package "State Consistency" {
+        component "Atomic operations"
+        component "Count sync"
+        component "Idempotent functions"
+        component "Assert guards"
+    }
+    
+    package "Audit Trail" {
+        component "Event emission"
+        component "Immutable TX history"
+        component "Timestamps"
+    }
+}
+
+package "Layer 2: Blockchain Security" <<L2>> {
+    package "Sui Consensus" {
+        component "BFT"
+        component "Validator network"
+        component "Fast finality"
+    }
+    
+    package "Cryptography" {
+        component "Ed25519 signatures"
+        component "Ownership proofs"
+        component "TX authenticity"
+    }
+    
+    package "Network Security" {
+        component "DDoS protection"
+        component "Rate limiting"
+        component "Node redundancy"
+    }
+}
+
+package "Layer 3: Frontend Security" <<L3>> {
+    package "Input Sanitization" {
+        component "XSS prevention"
+        component "Form validation"
+        component "Type checking"
+    }
+    
+    package "Transaction Safety" {
+        component "User confirmation"
+        component "Gas estimation"
+        component "Error handling"
+        component "Rollback"
+    }
+    
+    package "Wallet Security" {
+        component "Private key in wallet"
+        component "TX signing"
+        component "No key exposure"
+    }
+}
+
+package "Layer 4: Infrastructure Security" <<L4>> {
+    component "HTTPS/TLS"
+    component "Env protection"
+    component "Dependency scanning"
+    component "Security updates"
+}
+
+note right of "Layer 1: Smart Contract Security"
+  Core blockchain-level security
+  Enforced by Move language
+  Immutable after deployment
+end note
+
+note right of "Layer 2: Blockchain Security"
+  Network-level protection
+  Sui consensus mechanism
+  Cryptographic guarantees
+end note
+
+note right of "Layer 3: Frontend Security"
+  Client-side protection
+  User interaction safety
+  Secure wallet integration
+end note
+
+note right of "Layer 4: Infrastructure Security"
+  Deployment security
+  Transport security
+  Configuration protection
+end note
+
+@enduml

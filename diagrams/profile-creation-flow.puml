@@ -1,0 +1,56 @@
+@startuml Profile Creation Flow
+
+actor User
+participant "User Interface" as UI
+participant "CreateProfile Component" as CP
+participant "Form Handler" as Form
+participant "Transaction Builder" as TX
+participant "Wallet" as Wallet
+participant "Sui Blockchain" as Blockchain
+participant "Frontend Query" as Query
+participant "Updated UI" as UpdatedUI
+
+User -> UI: 1. Input username
+UI -> CP: Pass input
+CP -> Form: 2. Validate
+activate Form
+Form -> Form: Check length
+Form -> Form: Check validity
+Form --> CP: Validation result
+deactivate Form
+
+CP -> TX: 3. Build TX
+activate TX
+TX -> TX: Create transaction
+TX -> TX: Add arguments
+TX --> CP: Transaction object
+deactivate TX
+
+CP -> Wallet: 4. Request signature
+activate Wallet
+Wallet -> User: Confirm transaction
+User --> Wallet: Approve
+Wallet -> Wallet: Sign with private key
+Wallet --> CP: Signed transaction
+deactivate Wallet
+
+CP -> Blockchain: 5. Execute transaction
+activate Blockchain
+Blockchain -> Blockchain: Validate username
+Blockchain -> Blockchain: Check uniqueness
+Blockchain -> Blockchain: Create UserProfile
+Blockchain -> Blockchain: Update ProfileRegistry
+Blockchain -> Blockchain: Emit event
+Blockchain --> CP: Success
+deactivate Blockchain
+
+CP -> Query: 6. Trigger refetch
+activate Query
+Query -> Blockchain: Query updated data
+Blockchain --> Query: Profile data
+Query --> UpdatedUI: 7. Update state
+deactivate Query
+
+UpdatedUI -> User: Display new profile
+
+@enduml

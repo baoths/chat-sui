@@ -1,0 +1,94 @@
+@startuml Component Interaction Model
+
+skinparam component {
+    BackgroundColor<<Main>> LightBlue
+    BackgroundColor<<Tab>> LightGreen
+    BackgroundColor<<Feature>> LightYellow
+    BackgroundColor<<Hook>> LightPink
+    BackgroundColor<<Integration>> LightGray
+}
+
+component "ChatApp" as ChatApp <<Main>>
+
+package "Tabs" {
+    component "Profile Tab" as ProfileTab <<Tab>>
+    component "Rooms Tab" as RoomsTab <<Tab>>
+    component "Chat Tab" as ChatTab <<Tab>>
+}
+
+package "Profile Features" {
+    component "CreateProfile" as CP <<Feature>>
+    component "ProfileView" as PV <<Feature>>
+    component "UpdateUsername" as UU <<Feature>>
+}
+
+package "Room Features" {
+    component "CreateRoom" as CR <<Feature>>
+    component "RoomList" as RL <<Feature>>
+}
+
+package "Chat Features" {
+    component "MessageList" as ML <<Feature>>
+    component "SendMessage" as SM <<Feature>>
+    component "JoinRoom" as JR <<Feature>>
+    component "LeaveRoom" as LR <<Feature>>
+}
+
+package "Custom Hooks" {
+    component "useChatRegistry" as UCR <<Hook>>
+    component "useRoomMembership" as URM <<Hook>>
+}
+
+component "dapp-kit" as DappKit <<Integration>>
+database "Sui Blockchain" as Blockchain
+
+ChatApp --> ProfileTab
+ChatApp --> RoomsTab
+ChatApp --> ChatTab
+
+ProfileTab --> CP
+ProfileTab --> PV
+ProfileTab --> UU
+
+RoomsTab --> CR
+RoomsTab --> RL
+
+ChatTab --> ML
+ChatTab --> SM
+ChatTab --> JR
+ChatTab --> LR
+
+CP --> UCR
+PV --> UCR
+UU --> UCR
+CR --> UCR
+RL --> UCR
+ML --> UCR
+SM --> UCR
+
+JR --> URM
+LR --> URM
+ML --> URM
+SM --> URM
+
+UCR --> DappKit
+URM --> DappKit
+
+DappKit --> Blockchain
+
+note right of UCR
+  Manages:
+  - Profile queries
+  - Room queries
+  - Message queries
+  - Event subscriptions
+end note
+
+note right of URM
+  Manages:
+  - Membership checks
+  - Join/Leave operations
+  - Member count updates
+end note
+
+@enduml

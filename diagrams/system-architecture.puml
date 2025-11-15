@@ -1,0 +1,76 @@
+@startuml System Architecture
+
+skinparam component {
+    BackgroundColor<<user>> LightBlue
+    BackgroundColor<<frontend>> LightGreen
+    BackgroundColor<<blockchain>> LightYellow
+    BackgroundColor<<storage>> LightPink
+}
+
+package "USER LAYER" {
+    component "Browser App" as browser <<user>>
+    component "Mobile App" as mobile <<user>>
+    component "Desktop App" as desktop <<user>>
+    component "Wallet Extension" as wallet <<user>>
+}
+
+package "FRONTEND LAYER" {
+    component "React Application" as react <<frontend>>
+    component "dapp-kit" as dappkit <<frontend>>
+}
+
+package "SUI BLOCKCHAIN LAYER" {
+    component "Sui Full Node" as fullnode <<blockchain>>
+    component "Smart Contracts" as contracts <<blockchain>>
+    database "Storage Layer" as storage <<storage>>
+}
+
+browser --> react
+mobile --> react
+desktop --> react
+wallet --> react
+
+react --> dappkit
+dappkit --> fullnode
+fullnode --> contracts
+contracts --> storage
+
+note right of react
+  - TanStack Router
+  - TanStack Query
+  - Radix UI
+  - Form Validation
+end note
+
+note right of dappkit
+  - Wallet Connection
+  - Transaction Builder
+  - Query Hooks
+end note
+
+note right of fullnode
+  - JSON-RPC API
+  - WebSocket Events
+  - Object Queries
+  - TX Execution
+end note
+
+note right of contracts
+  Shared Objects:
+  - ProfileRegistry
+  - RoomRegistry
+  - MessageRegistry
+  - RoomMemberRegistry
+  
+  Owned Objects:
+  - UserProfile
+  - Message
+end note
+
+note right of storage
+  - Object Store
+  - Event Store
+  - TX History
+end note
+
+@enduml

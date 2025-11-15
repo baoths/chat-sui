@@ -61,25 +61,31 @@
    - Cho phép ownership rõ ràng và transfer nếu cần
    - Khác với các blockchain khác chỉ lưu hash hoặc pointer
 
-2. **Registry-Based Discovery System**:
+2. **zkLogin Integration với Enoki**:
+   - Passwordless authentication qua Google OAuth
+   - Không cần cài ví crypto để bắt đầu sử dụng
+   - User onboarding thân thiện với Web2 users
+   - Tích hợp seamless với traditional wallets
+
+3. **Registry-Based Discovery System**:
    - Sử dụng 4 registry riêng biệt: ProfileRegistry, RoomRegistry, MessageRegistry, RoomMemberRegistry
    - Cho phép query hiệu quả và scalable
    - Thiết kế module hóa, dễ mở rộng
 
-3. **Hybrid On-chain/Off-chain Design**:
+4. **Hybrid On-chain/Off-chain Design**:
    - Metadata và ownership: on-chain
    - Content có thể mở rộng lên IPFS/Arweave cho messages dài (future feature)
    - Cân bằng giữa decentralization và practicality
 
-4. **Username Uniqueness với Case-Insensitive**:
+5. **Username Uniqueness với Case-Insensitive**:
    - Hệ thống username unique case-insensitive (hiếm thấy trong Move smart contracts)
    - Tránh confusion và squatting attacks
 
-5. **Real-time Membership Tracking**:
+6. **Real-time Membership Tracking**:
    - Track members trong room real-time through events
    - Member count on-chain để tính toán incentives (future)
 
-6. **Gas-Optimized Design**:
+7. **Gas-Optimized Design**:
    - Sử dụng Sui's parallel execution
    - Batch operations có thể thực hiện independent
    - Event-driven architecture giảm số lượng queries
@@ -95,6 +101,8 @@
 | **Data Ownership** | ✅ User | ❌ Platform | ✅ User |
 | **Privacy** | ⚠️ Pseudonymous | ⚠️ Varies | ⚠️ Pseudonymous |
 | **Scalability** | ✅ High | ✅ High | ❌ Limited |
+| **Easy Onboarding** | ✅ zkLogin/Wallet | ✅ Email/Social | ❌ Wallet only |
+| **User Experience** | ✅ Web2-like | ✅ Native | ❌ Complex |
 
 ---
 
@@ -116,7 +124,9 @@
 ### C. Sui Integration:
 - **@mysten/dapp-kit**: Official Sui dApp development kit
 - **@mysten/sui**: Sui SDK cho blockchain interactions
+- **@mysten/enoki**: Sui zkLogin integration cho passwordless authentication
 - **Wallet Integration**: Hỗ trợ multiple Sui wallets (Sui Wallet, Suiet, Ethos, etc.)
+- **zkLogin**: Google OAuth integration qua Enoki cho user onboarding dễ dàng
 
 ### D. UI/UX Technologies:
 - **Radix UI**: Accessible, customizable UI components
@@ -136,18 +146,23 @@
 
 ### Hiện tại (MVP):
 
-#### A. User Management:
-1. **Create Profile**:
+#### A. Authentication & User Management:
+1. **Multiple Authentication Methods**:
+   - **zkLogin với Enoki**: Đăng nhập bằng Google OAuth (passwordless)
+   - **Traditional Wallets**: Sui Wallet, Suiet, Ethos, Martian, etc.
+   - **Auto-connect**: Tự động kết nối lại wallet đã dùng trước đó
+
+2. **Create Profile**:
    - Tạo profile với username unique (case-insensitive)
    - Validation: 3-50 characters, không chỉ whitespace
    - Profile ownership trên blockchain
 
-2. **Update Username**:
+3. **Update Username**:
    - Thay đổi username bất kỳ lúc nào
    - Kiểm tra uniqueness real-time
    - History tracking thông qua events
 
-3. **Profile View**:
+4. **Profile View**:
    - Hiển thị username, address, created/updated timestamps
    - View profile của users khác
 
@@ -483,6 +498,29 @@ User Select → Set selectedRoomId → Load Messages
 
 ### C. Blockchain Integration Layer
 
+#### Enoki zkLogin Integration:
+```typescript
+// Enoki setup cho zkLogin authentication
+import { isEnokiNetwork, registerEnokiWallets } from "@mysten/enoki";
+
+const { unregister } = registerEnokiWallets({
+  apiKey: ENOKI_API_KEY,
+  providers: {
+    google: {
+      clientId: GOOGLE_CLIENT_ID,
+    },
+  },
+  client,
+  network,
+});
+```
+
+**Benefits của Enoki zkLogin**:
+- **Passwordless Login**: Users login bằng Google account, không cần private key
+- **Lower Barrier**: Web2 users có thể dùng ngay không cần hiểu về crypto wallets
+- **Security**: zkProof technology đảm bảo privacy và security
+- **Seamless UX**: Tích hợp với traditional wallet providers
+
 #### Sui Client Configuration:
 ```typescript
 // Network config với environment-based package IDs
@@ -607,425 +645,47 @@ const messages = await Promise.all(messagePromises);
 
 ### A. System Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         USER LAYER                          │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐   │
-│  │ Browser  │  │ Mobile   │  │ Desktop  │  │  Wallet  │   │
-│  │   App    │  │   App    │  │   App    │  │Extension │   │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘   │
-└───────┼─────────────┼─────────────┼─────────────┼──────────┘
-        │             │             │             │
-        └─────────────┴─────────────┴─────────────┘
-                      │
-┌─────────────────────┼─────────────────────────────────────┐
-│                FRONTEND LAYER                             │
-│     ┌───────────────▼─────────────────┐                   │
-│     │   React Application (Vite)      │                   │
-│     ├─────────────────────────────────┤                   │
-│     │  - TanStack Router              │                   │
-│     │  - TanStack Query (Cache)       │                   │
-│     │  - Radix UI Components          │                   │
-│     │  - Form Validation (Zod)        │                   │
-│     └───────────────┬─────────────────┘                   │
-│                     │                                      │
-│     ┌───────────────▼─────────────────┐                   │
-│     │  @mysten/dapp-kit Integration   │                   │
-│     ├─────────────────────────────────┤                   │
-│     │  - Wallet Connection            │                   │
-│     │  - Transaction Builder          │                   │
-│     │  - Query Hooks                  │                   │
-│     └───────────────┬─────────────────┘                   │
-└─────────────────────┼─────────────────────────────────────┘
-                      │
-┌─────────────────────┼─────────────────────────────────────┐
-│              SUI BLOCKCHAIN LAYER                         │
-│     ┌───────────────▼─────────────────┐                   │
-│     │    Sui Full Node (RPC)          │                   │
-│     ├─────────────────────────────────┤                   │
-│     │  - JSON-RPC API                 │                   │
-│     │  - WebSocket (Events)           │                   │
-│     │  - Object Queries               │                   │
-│     │  - Transaction Execution        │                   │
-│     └───────────────┬─────────────────┘                   │
-│                     │                                      │
-│     ┌───────────────▼─────────────────┐                   │
-│     │    Move Smart Contracts         │                   │
-│     │      (chat::chat module)        │                   │
-│     ├─────────────────────────────────┤                   │
-│     │  Shared Objects:                │                   │
-│     │  ├─ ProfileRegistry             │                   │
-│     │  ├─ RoomRegistry                │                   │
-│     │  ├─ MessageRegistry             │                   │
-│     │  ├─ RoomMemberRegistry          │                   │
-│     │  └─ Room Objects                │                   │
-│     │                                 │                   │
-│     │  Owned Objects:                 │                   │
-│     │  ├─ UserProfile                 │                   │
-│     │  └─ Message                     │                   │
-│     └───────────────┬─────────────────┘                   │
-│                     │                                      │
-│     ┌───────────────▼─────────────────┐                   │
-│     │    Sui Storage Layer            │                   │
-│     ├─────────────────────────────────┤                   │
-│     │  - Object Store                 │                   │
-│     │  - Event Store                  │                   │
-│     │  - Transaction History          │                   │
-│     └─────────────────────────────────┘                   │
-└───────────────────────────────────────────────────────────┘
-```
+![System Architecture](diagrams/system-architecture.puml)
+
+> **Xem diagram**: Mở file `diagrams/system-architecture.puml` trong VS Code với PlantUML extension để xem sơ đồ tương tác.
 
 ### B. Data Flow Model
 
 #### 1. Profile Creation Flow
-```
-┌─────────┐    1. Input    ┌─────────────┐
-│  User   │───────────────>│CreateProfile│
-│Interface│                │  Component  │
-└─────────┘                └──────┬──────┘
-                                  │ 2. Validate
-                                  ▼
-                           ┌─────────────┐
-                           │Form Handler │
-                           │   (Zod)     │
-                           └──────┬──────┘
-                                  │ 3. Build TX
-                                  ▼
-                           ┌─────────────┐
-                           │Transaction  │
-                           │   Builder   │
-                           └──────┬──────┘
-                                  │ 4. Sign
-                                  ▼
-                           ┌─────────────┐
-                           │   Wallet    │
-                           └──────┬──────┘
-                                  │ 5. Execute
-                                  ▼
-                    ┌──────────────────────────┐
-                    │  Sui Blockchain          │
-                    │  create_profile()        │
-                    ├──────────────────────────┤
-                    │ 1. Validate username     │
-                    │ 2. Check uniqueness      │
-                    │ 3. Create UserProfile    │
-                    │ 4. Update Registry       │
-                    │ 5. Emit Event            │
-                    └──────────┬───────────────┘
-                               │ 6. Events
-                               ▼
-                    ┌────────────────────┐
-                    │  Frontend Query    │
-                    │    Refetch         │
-                    └──────────┬─────────┘
-                               │ 7. Display
-                               ▼
-                    ┌────────────────────┐
-                    │   Updated UI       │
-                    │ (Profile View)     │
-                    └────────────────────┘
-```
+
+![Profile Creation Flow](diagrams/profile-creation-flow.puml)
+
+> **Xem diagram**: Mở file `diagrams/profile-creation-flow.puml` trong VS Code với PlantUML extension để xem sequence diagram chi tiết.
 
 #### 2. Messaging Flow
-```
-User Types Message
-       │
-       ▼
-[Content Validation]
-       │
-       ▼
-[Check Room Membership] ◄──── Query RoomMemberRegistry
-       │
-       ▼
-[Build send_message TX]
-       │
-       ├─── profileRegistryId
-       ├─── roomRegistryId
-       ├─── roomId
-       ├─── messageRegistryId
-       ├─── memberRegistryId
-       ├─── content
-       └─── clock
-       │
-       ▼
-[Wallet Signs TX]
-       │
-       ▼
-[Blockchain Executes]
-       │
-       ├─► Create Message Object (owned by sender)
-       ├─► Add to MessageRegistry
-       ├─► Increment message count
-       └─► Emit MessageSent event
-       │
-       ▼
-[Event Captured]
-       │
-       ▼
-[Query Invalidation]
-       │
-       ▼
-[Refetch Messages]
-       │
-       ▼
-[UI Updates with New Message]
-```
+
+![Messaging Flow](diagrams/messaging-flow.puml)
+
+> **Xem diagram**: Mở file `diagrams/messaging-flow.puml` trong VS Code với PlantUML extension để xem sequence diagram chi tiết.
 
 ### C. Object Relationship Model
 
-```
-                    ┌────────────────────┐
-                    │  ProfileRegistry   │
-                    │   (Shared Object)  │
-                    ├────────────────────┤
-                    │ profiles: Table    │
-                    │ usernames: Table   │
-                    └──────────┬─────────┘
-                               │ 1:N
-                               │ maps to
-                               ▼
-                    ┌────────────────────┐
-                    │   UserProfile      │
-                    │  (Owned Object)    │
-                    ├────────────────────┤
-                    │ id: UID            │
-                    │ owner: address     │
-                    │ username: String   │
-                    │ created_at: u64    │
-                    └────────────────────┘
-                               │
-                               │ N:M
-                               │ (via RoomMemberRegistry)
-                               │
-┌────────────────────┐         │         ┌────────────────────┐
-│   RoomRegistry     │         │         │RoomMemberRegistry  │
-│  (Shared Object)   │         │         │  (Shared Object)   │
-├────────────────────┤         │         ├────────────────────┤
-│ rooms: Table       │         │         │ members_by_room    │
-│ room_count: u64    │         │         │ member_counts      │
-└────────┬───────────┘         │         └─────────┬──────────┘
-         │ 1:N                 │                   │
-         │ tracks              │                   │ tracks
-         ▼                     │                   │ membership
-┌────────────────────┐         │                   │
-│      Room          │◄────────┴───────────────────┘
-│ (Shared Object)    │
-├────────────────────┤
-│ id: UID            │
-│ name: String       │
-│ description: String│
-│ creator: address   │
-│ member_count: u64  │
-└────────┬───────────┘
-         │ 1:N
-         │ contains
-         │
-         ▼
-┌────────────────────┐         ┌────────────────────┐
-│ MessageRegistry    │         │     Message        │
-│  (Shared Object)   │         │  (Owned Object)    │
-├────────────────────┤         ├────────────────────┤
-│ messages_by_room   │◄────────│ id: UID            │
-│ message_counts     │  tracks │ room_id: ID        │
-└────────────────────┘         │ author: address    │
-                               │ content: String    │
-                               │ created_at: u64    │
-                               └────────────────────┘
-```
+![Object Relationship Model](diagrams/object-relationship.puml)
+
+> **Xem diagram**: Mở file `diagrams/object-relationship.puml` trong VS Code với PlantUML extension để xem class diagram chi tiết các mối quan hệ giữa objects.
 
 ### D. Component Interaction Model
 
-```
-                    ┌──────────────────┐
-                    │    ChatApp       │
-                    │  (Main Container)│
-                    └────────┬─────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-              ▼              ▼              ▼
-    ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-    │Profile Tab  │  │ Rooms Tab   │  │  Chat Tab   │
-    └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-           │                │                 │
-           │                │                 │
-    ┌──────▼──────┐  ┌──────▼──────┐   ┌─────▼──────┐
-    │CreateProfile│  │ CreateRoom  │   │ MessageList│
-    └─────────────┘  └─────────────┘   └─────┬──────┘
-           │                │                 │
-    ┌──────▼──────┐  ┌──────▼──────┐   ┌─────▼──────┐
-    │ProfileView  │  │  RoomList   │   │SendMessage │
-    └─────────────┘  └──────┬──────┘   └────────────┘
-           │                │                 │
-    ┌──────▼──────┐         │           ┌─────▼──────┐
-    │UpdateUsername│        │           │ JoinRoom   │
-    └─────────────┘         │           └────────────┘
-                            │                 │
-                            │           ┌─────▼──────┐
-                            │           │ LeaveRoom  │
-                            │           └────────────┘
-                            │
-              ┌─────────────┴─────────────┐
-              │                           │
-        ┌─────▼──────┐            ┌───────▼────────┐
-        │useChatRegistry│          │useRoomMembership│
-        │   (Hook)    │            │     (Hook)      │
-        └─────────────┘            └─────────────────┘
-              │                           │
-              └───────────┬───────────────┘
-                          │
-                   ┌──────▼──────┐
-                   │ @mysten/    │
-                   │ dapp-kit    │
-                   └──────┬──────┘
-                          │
-                   ┌──────▼──────┐
-                   │Sui Blockchain│
-                   └─────────────┘
-```
+![Component Interaction Model](diagrams/component-interaction.puml)
+
+> **Xem diagram**: Mở file `diagrams/component-interaction.puml` trong VS Code với PlantUML extension để xem component diagram chi tiết.
 
 ### E. Deployment Model
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    DEVELOPMENT                          │
-├─────────────────────────────────────────────────────────┤
-│  Developer Machine                                      │
-│  ├─ Source Code (Git)                                   │
-│  ├─ Local Sui CLI                                       │
-│  ├─ Local Node (optional)                               │
-│  └─ Development Server (Vite)                           │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   │ git push
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                   BUILD & TEST                          │
-├─────────────────────────────────────────────────────────┤
-│  CI/CD Pipeline (GitHub Actions)                        │
-│  ├─ Code Quality (Biome)                                │
-│  ├─ Type Checking (TypeScript)                          │
-│  ├─ Build (Vite)                                        │
-│  ├─ Unit Tests                                          │
-│  └─ Smart Contract Tests                                │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   │ on success
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│              SMART CONTRACT DEPLOYMENT                  │
-├─────────────────────────────────────────────────────────┤
-│  Sui Testnet/Mainnet                                    │
-│  ├─ sui client publish                                  │
-│  ├─ Get Package ID                                      │
-│  ├─ Shared Objects created:                             │
-│  │   ├─ ProfileRegistry                                 │
-│  │   ├─ RoomRegistry                                    │
-│  │   ├─ MessageRegistry                                 │
-│  │   └─ RoomMemberRegistry                              │
-│  └─ Update .env with IDs                                │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   │ configure
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│              FRONTEND DEPLOYMENT                        │
-├─────────────────────────────────────────────────────────┤
-│  Hosting Platform (Vercel/Netlify/IPFS)                 │
-│  ├─ Build Production Bundle                             │
-│  ├─ Environment Variables:                              │
-│  │   ├─ VITE_TESTNET_CHAT_PACKAGE_ID                    │
-│  │   ├─ VITE_TESTNET_PROFILE_REGISTRY_ID                │
-│  │   └─ ... other registry IDs                          │
-│  ├─ Deploy Static Assets                                │
-│  └─ CDN Distribution                                    │
-└──────────────────┬──────────────────────────────────────┘
-                   │
-                   │ access via
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                 PRODUCTION                              │
-├─────────────────────────────────────────────────────────┤
-│  Users Access Via:                                      │
-│  ├─ Web Browser (https://app.example.com)               │
-│  ├─ IPFS Gateway (decentralized hosting)                │
-│  └─ Local Build (self-hosted)                           │
-│                                                         │
-│  Connects To:                                           │
-│  ├─ Sui Mainnet RPC (fullnode.mainnet.sui.io)          │
-│  └─ Deployed Smart Contracts                            │
-└─────────────────────────────────────────────────────────┘
-```
+![Deployment Model](diagrams/deployment.puml)
+
+> **Xem diagram**: Mở file `diagrams/deployment.puml` trong VS Code với PlantUML extension để xem deployment diagram chi tiết.
 
 ### F. Security Model
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    SECURITY LAYERS                      │
-└─────────────────────────────────────────────────────────┘
+![Security Model](diagrams/security-model.puml)
 
-Layer 1: Smart Contract Security
-├─ Access Control
-│  ├─ Owner-only operations (update_username)
-│  ├─ Member-only operations (send_message)
-│  └─ Registry integrity checks
-│
-├─ Input Validation
-│  ├─ Length constraints (MIN/MAX constants)
-│  ├─ String validation (is_valid_string)
-│  ├─ Type safety (Move's type system)
-│  └─ Overflow protection (u64 checks)
-│
-├─ State Consistency
-│  ├─ Atomic operations
-│  ├─ Count synchronization (member_count)
-│  ├─ Idempotent functions (join/leave)
-│  └─ Assert-based guards
-│
-└─ Audit Trail
-   ├─ All actions emit events
-   ├─ Immutable transaction history
-   └─ On-chain timestamp records
-
-Layer 2: Blockchain Security
-├─ Sui Consensus
-│  ├─ Byzantine Fault Tolerance
-│  ├─ Validator network
-│  └─ Fast finality
-│
-├─ Cryptography
-│  ├─ Ed25519 signatures
-│  ├─ Object ownership proofs
-│  └─ Transaction authenticity
-│
-└─ Network Security
-   ├─ DDoS protection
-   ├─ Rate limiting
-   └─ Node redundancy
-
-Layer 3: Frontend Security
-├─ Input Sanitization
-│  ├─ XSS prevention (React auto-escaping)
-│  ├─ Form validation (Zod schemas)
-│  └─ Type checking (TypeScript)
-│
-├─ Transaction Safety
-│  ├─ User confirmation dialogs
-│  ├─ Gas estimation display
-│  ├─ Error handling
-│  └─ Rollback on failure
-│
-└─ Wallet Security
-   ├─ Private key in wallet only
-   ├─ Transaction signing in wallet
-   └─ No private key exposure
-
-Layer 4: Infrastructure Security
-├─ HTTPS/TLS encryption
-├─ Environment variable protection
-├─ Dependency security scanning
-└─ Regular security updates
-```
+> **Xem diagram**: Mở file `diagrams/security-model.puml` trong VS Code với PlantUML extension để xem package diagram về các lớp bảo mật.
 
 ---
 
